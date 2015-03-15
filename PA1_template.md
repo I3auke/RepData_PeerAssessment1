@@ -13,7 +13,6 @@ act <- read.csv(file="activity.csv",header=T)
 act$date<-strptime(act$date,"%Y-%m-%d")
 library(plyr)
 sumperday<-ddply(act,.(date),summarize,sum_steps=sum(steps))
-#summaryperday<-ddply(act,.(date),summarize, mean_steps=mean(steps, na.rm=TRUE), median_steps=median(steps, na.rm=TRUE))
 ```
 
 Histogram of the sum of the number of steps per day:
@@ -153,5 +152,4 @@ xyplot(av ~ interval| weekend,
 ```
 
 ![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
-library(knitr)
-?knit2html() 
+

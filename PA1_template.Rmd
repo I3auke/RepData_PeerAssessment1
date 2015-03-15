@@ -1,25 +1,103 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "Bauke Visser"
+date: "Thursday, March 05, 2015"
+output: html_document
 ---
 
 
-## Loading and preprocessing the data
+```{r, echo=TRUE}
+setwd("C:/DATA/prive/R_Coursera/05 Reproducible")
+act <- read.csv(file="activity.csv",header=T)
+act$date<-strptime(act$date,"%Y-%m-%d")
+library(plyr)
+sumperday<-ddply(act,.(date),summarize,sum_steps=sum(steps))
+```
 
+Histogram of the sum of the number of steps per day:
 
+```{r, echo=TRUE}
+plot(sumperday$date,sumperday$sum_steps ,type="h", xlab="date", ylab= "sum steps")
+```
 
-## What is mean total number of steps taken per day?
+Mean of the number of steps per day:
+```{r, echo=TRUE}
+mean(sumperday$sum_steps, na.rm=TRUE)
+```
 
+Median of the number of steps per day:
+```{r, echo=TRUE}
+median(sumperday$sum_steps, na.rm=TRUE)
+```
 
+activity pattern:
+```{r, echo=TRUE}
+meanperinterval<-ddply(act,.(interval),summarize,mean_steps=mean(steps,na.rm=TRUE))
+plot(meanperinterval$interval,meanperinterval$mean_steps ,type="l", xlab="interval", ylab= "mean steps")
+```
 
-## What is the average daily activity pattern?
+max time interval:
+```{r, echo=TRUE}
+max<-max(meanperinterval$mean_steps)
+subs<-meanperinterval[meanperinterval$mean_steps==max,]
+maxinterval<-subs$interval
+print(maxinterval)
+```
 
+inputing missing values
+total number of NAs:
+```{r, echo=TRUE}
+sum(is.na(act$steps))
+```
 
+fill NAs with average of interval:
+```{r, echo=TRUE}
+actnonna<-act
+actnonna$date<-strptime(actnonna$date,"%Y-%m-%d")
+for(i in 1:nrow(actnonna)) {
+    if (is.na(actnonna$steps[i])){
+        subs<-meanperinterval[meanperinterval$interval==actnonna$interval[i],]
+        actnonna$steps[i]<-subs$mean_steps
+    }
+}
+```
 
-## Imputing missing values
+calculate total, mean, medain of steps per day:
+```{r, echo=TRUE}
+sumperday1<-ddply(actnonna,.(date),summarize, sum_steps=sum(steps, na.rm=TRUE))
+plot(sumperday1$date, sumperday1$sum_steps, type="h", main="sum of steps with NA's imputed ", xlab="date", ylab= "sum steps")
+```
 
+As you can see, the plot looks a little different with NA's imputed.
 
+mean and median:
+```{r, echo=TRUE}
+mean(sumperday1$sum_steps)
+median(sumperday1$sum_steps)
+```
 
-## Are there differences in activity patterns between weekdays and weekends?
+As you can see, the mean did not change because for the second calculation, the NA's were imputed by means.
+The median changed slightly; it became the same value as the mean.
+The total sums went up a bit because NA's dont add to a sum, but average estimates stayed the same because NA's were imputed by averages.
+
+weekdays and weekends:
+```{r, echo=TRUE}
+Sys.setlocale("LC_TIME", "English")
+act$weekday<-weekdays(act$date,1)
+for(i in 1:nrow(act)) {
+if(act$weekday[i]=="Sat"|act$weekday[i]=="Sun")
+    {act$weekend[i]<-"weekend"}
+else{
+    act$weekend[i]<-"weekday"}
+}
+avstps<-ddply(act,.(weekend, interval),summarize, av=mean(steps, na.rm=TRUE))
+library(lattice)
+xyplot(av ~ interval| weekend, 
+           data = avstps,
+           type = "l",
+           xlab = "Interval",
+           ylab = "Number of steps",
+           layout=c(1,2))
+
+```
+
